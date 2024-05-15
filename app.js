@@ -6,7 +6,6 @@ import Razorpay from 'razorpay';
 import PDFDocument from 'pdfkit';
 import qr from 'qr-image';
 import nodemailer from 'nodemailer';
-import fetch from 'node-fetch'; 
 
 import { Payment } from "./models/userPaymentSchema.js";
 import dotenv from "dotenv";
@@ -15,11 +14,8 @@ dotenv.config();
 mongoose.connect("mongodb://localhost:27017/Hope");
 
 const app = express();
-
-
 app.use(bodyParser.json());
 app.use(express.json());
-
 app.use(express.static("public"));
 
 app.listen(process.env.PORT, () => {
@@ -134,7 +130,7 @@ app.post("/sendMail", async (req, res) => {
   const paymentDate = currentDate.toLocaleDateString(); 
   const paymentTime = currentDate.toLocaleTimeString();
 
-  const { year, email, ticketType, amount, paymentId, orderID } = req.body;
+  const { email, ticketType, amount, paymentId, orderID } = req.body;
 
   console.log("Trying to send mail ");
   try {
@@ -146,47 +142,61 @@ app.post("/sendMail", async (req, res) => {
       }
     });
 
-    const pdfUrl = `http://localhost:${process.env.PORT}/generate-pdf?email=${email}&ticket_type=${ticketType}&amount=${amount}&paymentId=${paymentId}&paymentRefId=${orderID}`;
-    
-    fetch(pdfUrl)
-      .then(res => res.arrayBuffer())
-      .then(pdfArrayBuffer => {
-        const pdfBuffer = Buffer.from(pdfArrayBuffer);
-        
-        const mailOptions = {
-          from: process.env.MAIL,
-          to: email,
-          subject: 'Hope House Ticket Information',
-          html: 
-          `
-              <p><strong>Hope House Ticket Information</strong></p>
-              <p>Ticket Type: ${ticketType}</p>
-              <p>Amount: ${amount}</p>
-              <p>Date and Time of Payment: ${paymentDate} ${paymentTime}</p>
-              <p>Payment ID: ${paymentId}</p>
-              <p>PaymentRef ID: ${orderID}</p>
-              <p>Please find the ticket attached below here.</p>
-            `,
-          attachments: [{
-            filename: `HopeHouseTicket_${paymentId}.pdf`, // Name of the attached file
-            content: pdfBuffer // Buffer containing the PDF content
-          }]
-        };
+    // Create PDF dynamically using pdfkit
+    const doc = new PDFDocument();
+    doc.image('./public/hopehouse_logo.png', { fit: [500, 1000] }).moveDown(7)
+    doc.fontSize(20).text('Hope House Ticket', { align: 'center' }).moveDown();
+    doc.fontSize(20).text(ticketType, { align: 'center' }).moveDown();
+    doc.fontSize(14).text(`Email: ${email}`).moveDown();
+    doc.fontSize(14).text(`Ticket Type: ${ticketType}`).moveDown();
+    doc.fontSize(14).text(`Amount: ${amount}`).moveDown();
+    doc.fontSize(14).text(`Date and Time of Payment: ${paymentDate} ${paymentTime}`).moveDown();
+    doc.fontSize(14).text(`Payment ID: ${paymentId}`).moveDown();
+    doc.fontSize(14).text(`PaymentRef ID: ${orderID}`).moveDown();
 
-        // Send email with attachment
-        transporter.sendMail(mailOptions, function(error, info) {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log('Email sent: ' + info.response);
-          }
-        });
-      })
-      .catch(error => {
-        console.log('Error fetching PDF:', error);
-      });
+    // Generate QR code for payment ID
+    const qrImage = qr.imageSync(paymentId, { type: 'png' });
+    doc.image(qrImage, { fit: [200, 200], align: 'center', valign: 'center' });
+
+    // Create a buffer from the PDF content
+    const pdfBuffer = await new Promise((resolve, reject) => {
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.end();
+    });
+
+    const mailOptions = {
+      from: process.env.MAIL,
+      to: email,
+      subject: 'Hope House Ticket Information',
+      html: `
+        <h1><strong>Hope House Ticket Information</strong></h1>
+        <p>Ticket Type: ${ticketType}</p>
+        <p>Amount: ${amount}</p>
+        <p>Date and Time of Payment: ${paymentDate} ${paymentTime}</p>
+        <p>Payment ID: ${paymentId}</p>
+        <p>PaymentRef ID: ${orderID}</p>
+        <p>Please find the ticket attached below.</p>
+      `,
+      attachments: [{
+        filename: `HopeHouseTicket_${paymentId}.pdf`, // Name of the attached file
+        content: pdfBuffer // Buffer containing the PDF content
+      }]
+    };
+
+    // Send email with attachment
+    transporter.sendMail(mailOptions, function(error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
+    res.sendStatus(200);
   } catch (error) {
-    console.error("Error saving payment:", error);
+    console.error("Error sending email:", error);
+    res.sendStatus(500);
   }
-  res.sendStatus(200);
 });
