@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E ticketing</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="./HopeHouseLogo.png">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <div class="form">
+        <div class="" id="qr">
+
+        </div>
+        <form id="paymentForm" class="">
+            <h2>Welcome To Online Ticket Booking</h2>
+            <div class="year">
+                <label for="year">Choose your year</label>
+                <select name="year" id="year" required>
+                    <option value="">--Please choose an option--</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="E1">E1</option>
+                    <option value="E2">E2</option>
+                    <option value="E3">E3</option>
+                    <option value="E4">E4</option>
+                </select>
+            </div>
+
+            <div class="tictkettype">
+                <label for="ticketType">Choose TicketType</label>
+                <select name="ticketType" id="ticketType" required>
+                    <option value="">--Please choose an option--</option>
+                    <option value="entry">Entry - 20 rs</option>
+                    <option value="entry_auditorium">Entry+Auditorium - 30 rs</option>
+                    <option value="premium">Premium -100 rs</option>
+                    <option value="super_premium">Super Premium - 120 rs</option>
+                </select>
+            </div>
+
+            <div class="email">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <br>
+            <button type="submit" class="submitbtn">Submit</button>
+            <div id="qrCodeContainer"></div>
+        </form>
+    </div>
+    
+    <script src="index.js"></script>
+</body>
+</html>

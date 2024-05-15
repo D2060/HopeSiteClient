@@ -1,0 +1,85 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    background-color: rgba(128, 128, 128, 0.37);
+}
+nav{
+    background-color: rgba(76, 202, 18, 0.692);
+    height: 7vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: poppins;
+}
+
+.form{
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+form,.qr{
+    height: 60vh;
+    width: 50vw;
+    border-radius: 8px;
+    background:rgba(255,255,255,0.3);
+    box-shadow: 2px 2px 36px rgb(77, 73, 73);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.year,.tictkettype ,.email{
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    margin: 2px;
+}
+
+.year label ,.tictkettype label {
+    padding: 10px;
+}
+
+.year select ,.tictkettype select ,.email input{
+    padding: 5px;
+    border-radius: 5px;
+}
+
+
+
+
+#email{
+    margin-top: 8px;
+    border: 1px solid black;
+}
+
+.hide{
+    display: none;
+}
+
+.qr >*{
+    margin-bottom: 20px;
+}
+
+.qr > button,.submitbtn{
+    height: 40px;
+    width: 100px;
+    border-radius: 8px;
+    background-color: #269393;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+@media screen and (max-width: 480px) {
+    #paymentForm{
+        height: 100vh;
+        width: 100vw;
+    }
+  }
