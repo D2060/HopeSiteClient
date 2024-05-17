@@ -3,3 +3,4 @@ generatedTickets/
 /rzp.csv
 /del.js
 node_modules/
+/serviceAccountKey.json
