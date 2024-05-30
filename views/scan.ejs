@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scan</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .scan-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .scan-container h2 {
+      margin-bottom: 20px;
+    }
+
+    #preview {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      margin-bottom: 20px;
+    }
+
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: #333;
+      display: none;
+      padding: 10px;
+      border: 2px solid green;
+      border-radius: 5px;
+      animation: fadeOut 2s forwards;
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    #record-list-container {
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    #record-list {
+      margin: 0;
+      padding: 0;
+    }
+
+    .record-item {
+      list-style-type: none;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background-color: #f9f9f9;
+    }
+
+    .record-item p {
+      margin: 0;
+      color: #555;
+    }
+
+    .record-item .timestamp {
+      font-size: 0.9em;
+      color: #888;
+    }
+
+    #flip-button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #flip-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="scan-container">
+    <h2>Scan QR Code</h2>
+    <video id="preview" style="width: 100%; height: auto;"></video>
+    <button id="flip-button">Flip Camera</button>
+    <div id="result"></div>
+    <div id="record-list-container">
+      <h3>History</h3>
+      <ul id="record-list"></ul>
+    </div>
+  </div>
+  <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const resultDiv = document.getElementById('result');
+      const videoElement = document.getElementById('preview');
+      const recordList = document.getElementById('record-list');
+      const flipButton = document.getElementById('flip-button');
+
+      let currentCameraIndex = 0;
+      let cameras = [];
+
+      const scanner = new Instascan.Scanner({ video: videoElement });
+      scanner.addListener('scan', function (content) {
+        console.log(content);
+        fetch('/admin/scan', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ paymentId: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.valid) {
+            resultDiv.innerHTML = `<p>Payment ID: ${content}</p>`;
+            resultDiv.style.borderColor = 'green';
+          } else {
+            resultDiv.innerHTML = `<p>${data.message}</p>`;
+            resultDiv.style.borderColor = 'red';
+          }
+          resultDiv.style.display = 'block';
+          setTimeout(() => {
+            const recordItem = document.createElement('li');
+            recordItem.classList.add('record-item');
+            const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+            recordItem.innerHTML = `
+              <p>${resultDiv.innerHTML}</p>
+              <p class="timestamp">Scanned at: ${timestamp}</p>
+            `;
+            recordList.insertBefore(recordItem, recordList.firstChild);
+            resultDiv.style.display = 'none';
+          }, 2000);
+        });
+      });
+
+      Instascan.Camera.getCameras().then(function (cams) {
+        cameras = cams;
+        if (cameras.length > 0) {
+          scanner.start(cameras[currentCameraIndex]);
+        } else {
+          console.error('No cameras found.');
+        }
+      }).catch(function (e) {
+        console.error(e);
+      });
+
+      flipButton.addEventListener('click', () => {
+        currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+        scanner.stop();
+        scanner.start(cameras[currentCameraIndex]);
+      });
+    });
+  </script>
+</body>
+</html>

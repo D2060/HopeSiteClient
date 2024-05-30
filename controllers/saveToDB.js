@@ -1,14 +1,7 @@
-import admin from 'firebase-admin';
-import serviceAccount from '../serviceAccountKey.json' assert { type: 'json' };
+import db from '../firebase.js'
 import dotenv from "dotenv";
 dotenv.config();
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://hopehousesite89-default-rtdb.firebaseio.com/'
-});
-
-const db = admin.firestore();
 
 const saveToDB = async (req, res) => {
   console.log("Entering /savetodb for saving database to server");
@@ -28,11 +21,12 @@ const saveToDB = async (req, res) => {
     paymentId: paymentId,
     paymentRefId: orderID,
     date: paymentDate,
-    time: paymentTime
+    time: paymentTime,
+    used:false
   };
   console.log("Trying to save");
   try {
-    await db.collection('payments').add(payment);
+    await db.collection('payments').doc(paymentId).set(payment);
     console.log("Payment saved successfully");
   } catch (error) {
     console.error("Error saving payment:", error);
