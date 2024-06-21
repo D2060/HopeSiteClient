@@ -12,7 +12,7 @@ router.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   // Replace with your own authentication logic
-  if (username === 'admin' && password === 'password') {
+  if (username === 'admin' && password === 'HopeSite@2023') {
     req.session.loggedIn = true;
     res.redirect('/admin/scan');
   } else {
